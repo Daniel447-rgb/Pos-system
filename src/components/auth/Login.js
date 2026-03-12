@@ -136,13 +136,6 @@ export default function Login() {
               )}
             </button>
           </form>
-
-          <div style={{ marginTop: '24px', padding: '16px', background: 'rgba(0, 229, 160, 0.05)', border: '1px solid rgba(0, 229, 160, 0.1)', borderRadius: '10px' }}>
-            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.6 }}>
-              <span style={{ color: 'var(--accent-emerald)', fontWeight: 600 }}>Demo: </span>
-              Create a Firebase account and update <code style={{ background: 'rgba(255,255,255,0.05)', padding: '1px 4px', borderRadius: '4px', fontSize: '11px' }}>src/firebase/config.js</code> with your credentials.
-            </p>
-          </div>
         </div>
       </div>
 
