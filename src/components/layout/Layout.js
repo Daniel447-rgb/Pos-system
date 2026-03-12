@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
   LayoutDashboard, Package, ShoppingCart, BarChart2,
-  Users, LogOut, Menu, X, ShoppingBag, Boxes, ChevronRight
+  Users, LogOut, Menu, X, ShoppingBag, Boxes
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -12,8 +12,17 @@ const navItems = [
   { to: '/pos', icon: ShoppingCart, label: 'POS Sale' },
   { to: '/products', icon: Package, label: 'Products' },
   { to: '/inventory', icon: Boxes, label: 'Inventory' },
-  { to: '/sales', icon: BarChart2, label: 'Sales History' },
+  { to: '/sales', icon: BarChart2, label: 'Sales' },
   { to: '/customers', icon: Users, label: 'Customers' },
+];
+
+// Bottom nav shows only 5 items on mobile
+const bottomNavItems = [
+  { to: '/dashboard', icon: LayoutDashboard, label: 'Home' },
+  { to: '/pos', icon: ShoppingCart, label: 'POS' },
+  { to: '/products', icon: Package, label: 'Products' },
+  { to: '/sales', icon: BarChart2, label: 'Sales' },
+  { to: '/customers', icon: Users, label: 'More' },
 ];
 
 export default function Layout({ children }) {
@@ -99,7 +108,7 @@ export default function Layout({ children }) {
   );
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-primary)' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', minHeight: '100dvh', background: 'var(--bg-primary)' }}>
       {/* Desktop sidebar */}
       <aside style={{
         width: '220px', flexShrink: 0, position: 'fixed', left: 0, top: 0, bottom: 0, zIndex: 200,
@@ -109,56 +118,142 @@ export default function Layout({ children }) {
         <SidebarContent />
       </aside>
 
-      {/* Mobile overlay */}
+      {/* Mobile/Tablet overlay */}
       {sidebarOpen && (
         <div
           onClick={() => setSidebarOpen(false)}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(5,11,20,0.8)', zIndex: 300, backdropFilter: 'blur(4px)' }}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(5,11,20,0.85)', zIndex: 300, backdropFilter: 'blur(4px)' }}
         />
       )}
 
-      {/* Mobile sidebar */}
+      {/* Drawer sidebar (mobile/tablet) */}
       <aside style={{
-        width: '240px', position: 'fixed', left: sidebarOpen ? 0 : '-240px', top: 0, bottom: 0, zIndex: 400,
+        width: '260px', position: 'fixed', left: sidebarOpen ? 0 : '-260px', top: 0, bottom: 0, zIndex: 400,
         background: 'var(--bg-surface)', borderRight: '1px solid var(--border)',
-        transition: 'left 0.25s ease'
+        transition: 'left 0.28s cubic-bezier(0.4,0,0.2,1)',
+        overflowY: 'auto'
       }}>
-        <button onClick={() => setSidebarOpen(false)} style={{ position: 'absolute', right: '12px', top: '20px', background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '8px', padding: '6px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+        <button onClick={() => setSidebarOpen(false)} style={{ position: 'absolute', right: '12px', top: '16px', background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '8px', padding: '8px', cursor: 'pointer', color: 'var(--text-secondary)', zIndex: 1 }}>
           <X size={16} />
         </button>
         <SidebarContent />
       </aside>
 
-      {/* Main */}
-      <main style={{ flex: 1, marginLeft: 0, minHeight: '100vh', display: 'flex', flexDirection: 'column' }} id="main-content">
+      {/* Main content */}
+      <main style={{ flex: 1, marginLeft: 0, minHeight: '100vh', minHeight: '100dvh', display: 'flex', flexDirection: 'column' }} id="main-content">
+
         {/* Top bar */}
         <div style={{
-          height: '56px', background: 'rgba(13, 27, 46, 0.8)', backdropFilter: 'blur(20px)',
+          height: '56px', background: 'rgba(13, 27, 46, 0.92)', backdropFilter: 'blur(20px)',
           borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center',
-          padding: '0 20px', gap: '12px', position: 'sticky', top: 0, zIndex: 100
+          padding: '0 16px', gap: '12px', position: 'sticky', top: 0, zIndex: 100,
+          WebkitBackdropFilter: 'blur(20px)'
         }}>
-          <button onClick={() => setSidebarOpen(true)} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', borderRadius: '8px', padding: '6px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+          <button
+            onClick={() => setSidebarOpen(true)}
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', borderRadius: '8px', padding: '7px', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+          >
             <Menu size={18} />
           </button>
-          <div style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: '16px', color: 'var(--text-primary)' }}>
+          <div style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: '17px', color: 'var(--text-primary)' }}>
             Swift<span style={{ color: 'var(--accent-cyan)' }}>POS</span>
           </div>
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent-emerald)', boxShadow: '0 0 8px rgba(0,229,160,0.6)' }} />
+            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent-emerald)', boxShadow: '0 0 8px rgba(0,229,160,0.6)', flexShrink: 0 }} />
             <span style={{ fontSize: '12px', color: 'var(--text-secondary)', fontFamily: 'Syne' }}>Live</span>
           </div>
         </div>
 
-        <div style={{ flex: 1, padding: '24px 20px', maxWidth: '1400px', width: '100%', margin: '0 auto' }} className="page-enter">
+        {/* Page content */}
+        <div style={{ flex: 1, padding: '20px 16px', paddingBottom: '90px', maxWidth: '1400px', width: '100%', margin: '0 auto', boxSizing: 'border-box' }} className="page-enter" id="page-content">
           {children}
         </div>
+
+        {/* Mobile Bottom Navigation */}
+        <nav style={{
+          position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 200,
+          background: 'rgba(13, 27, 46, 0.97)', backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          borderTop: '1px solid var(--border)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-around',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+          height: 'calc(60px + env(safe-area-inset-bottom))'
+        }} className="mobile-bottom-nav">
+          {bottomNavItems.map(({ to, icon: Icon, label }) => (
+            <NavLink
+              key={to}
+              to={to}
+              style={({ isActive }) => ({
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                gap: '3px', padding: '8px 12px', borderRadius: '12px', textDecoration: 'none',
+                color: isActive ? 'var(--accent-cyan)' : 'var(--text-muted)',
+                background: isActive ? 'rgba(0,212,255,0.08)' : 'transparent',
+                transition: 'all 0.15s ease', minWidth: '52px', flex: 1,
+                position: 'relative'
+              })}
+            >
+              {({ isActive }) => (
+                <>
+                  {to === '/pos' ? (
+                    <div style={{
+                      width: '42px', height: '42px', borderRadius: '12px',
+                      background: isActive ? 'linear-gradient(135deg, #00d4ff, #0099cc)' : 'rgba(0,212,255,0.15)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      border: isActive ? 'none' : '1px solid rgba(0,212,255,0.25)',
+                      marginTop: '-16px', boxShadow: isActive ? '0 4px 16px rgba(0,212,255,0.4)' : 'none'
+                    }}>
+                      <Icon size={20} color={isActive ? '#050b14' : 'var(--accent-cyan)'} strokeWidth={2.5} />
+                    </div>
+                  ) : (
+                    <Icon size={20} strokeWidth={isActive ? 2.5 : 1.8} />
+                  )}
+                  <span style={{
+                    fontSize: '10px', fontFamily: 'Syne', fontWeight: isActive ? 700 : 500,
+                    letterSpacing: '0.02em', marginTop: to === '/pos' ? '2px' : '0'
+                  }}>
+                    {label}
+                  </span>
+                  {isActive && to !== '/pos' && (
+                    <div style={{ position: 'absolute', bottom: '4px', width: '4px', height: '4px', borderRadius: '50%', background: 'var(--accent-cyan)' }} />
+                  )}
+                </>
+              )}
+            </NavLink>
+          ))}
+        </nav>
       </main>
 
       <style>{`
+        /* Desktop: show sidebar, hide bottom nav */
         @media (min-width: 1024px) {
           .lg-sidebar { display: block !important; }
           #main-content { margin-left: 220px !important; }
+          #page-content { padding-bottom: 24px !important; }
+          .mobile-bottom-nav { display: none !important; }
         }
+
+        /* Tablet: larger touch targets */
+        @media (min-width: 640px) and (max-width: 1023px) {
+          #page-content { padding: 20px !important; padding-bottom: 90px !important; }
+        }
+
+        /* Small mobile */
+        @media (max-width: 380px) {
+          #page-content { padding: 12px !important; padding-bottom: 90px !important; }
+        }
+
+        /* Safe area for notched phones */
+        @supports (padding-bottom: env(safe-area-inset-bottom)) {
+          .mobile-bottom-nav {
+            padding-bottom: env(safe-area-inset-bottom);
+          }
+        }
+
+        /* Prevent text size adjust on mobile */
+        * { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+        /* Better touch scrolling */
+        #page-content { -webkit-overflow-scrolling: touch; }
       `}</style>
     </div>
   );

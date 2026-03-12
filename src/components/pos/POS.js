@@ -95,7 +95,7 @@ export default function POS() {
   );
 
   return (
-    <div style={{ display: 'flex', gap: '16px', height: 'calc(100vh - 104px)' }}>
+    <div className="pos-layout" style={{ display: 'flex', gap: '16px', height: 'calc(100vh - 104px)' }}>
       {/* Left: Product Grid */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div style={{ marginBottom: '16px' }}>

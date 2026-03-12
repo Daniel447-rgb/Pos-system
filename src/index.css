@@ -309,3 +309,91 @@ h1, h2, h3, h4, h5, .font-display {
   .no-print { display: none !important; }
   .receipt-print { background: white !important; color: black !important; }
 }
+
+/* ─── MOBILE RESPONSIVE ─────────────────────────────────── */
+
+/* POS screen: stack on mobile */
+@media (max-width: 768px) {
+  .pos-layout {
+    flex-direction: column !important;
+    height: auto !important;
+    gap: 12px !important;
+  }
+
+  /* POS cart becomes full width on mobile */
+  .pos-layout > div:last-child {
+    width: 100% !important;
+  }
+
+  /* Tighter stat cards on mobile */
+  .stat-card {
+    padding: 14px !important;
+  }
+
+  /* Modal full screen on small phones */
+  .modal-box {
+    max-width: 100% !important;
+    width: calc(100vw - 24px) !important;
+    margin: 12px !important;
+    padding: 20px !important;
+    border-radius: 16px !important;
+  }
+
+  /* Data tables scroll horizontally */
+  .glass-card {
+    overflow-x: auto;
+  }
+
+  .data-table {
+    min-width: 500px;
+  }
+
+  /* Input fields larger touch targets on mobile */
+  .input-field {
+    padding: 12px 14px !important;
+    font-size: 16px !important; /* prevents iOS zoom */
+  }
+
+  /* Buttons larger on mobile */
+  .btn-primary, .btn-secondary, .btn-danger {
+    padding: 12px 16px !important;
+    font-size: 14px !important;
+  }
+
+  /* Product grid smaller cards on mobile */
+  .product-card-pos {
+    padding: 10px !important;
+  }
+}
+
+/* Tablet adjustments */
+@media (min-width: 640px) and (max-width: 1023px) {
+  .pos-layout {
+    flex-direction: column !important;
+    height: auto !important;
+  }
+
+  .pos-layout > div:last-child {
+    width: 100% !important;
+  }
+}
+
+/* Prevent iOS input zoom */
+@media screen and (max-width: 768px) {
+  select, textarea, input[type="text"], input[type="email"],
+  input[type="password"], input[type="number"], input[type="tel"],
+  input[type="date"] {
+    font-size: 16px !important;
+  }
+}
+
+/* Fix 100vh on mobile browsers (address bar) */
+@supports (height: 100dvh) {
+  .min-h-screen { min-height: 100dvh !important; }
+}
+
+/* Touch-friendly tap highlight */
+button, a, [role="button"] {
+  -webkit-tap-highlight-color: rgba(0, 212, 255, 0.1);
+  touch-action: manipulation;
+}
