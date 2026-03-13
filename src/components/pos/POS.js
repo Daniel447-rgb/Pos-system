@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { subscribeProducts, subscribeCustomers, createTransaction, updateCustomerStats } from '../../firebase/services';
-import { Search, Plus, Minus, Trash2, ShoppingCart, X, CreditCard, Banknote, Receipt, User, Check } from 'lucide-react';
+import { Search, Plus, Minus, Trash2, ShoppingCart, X, CreditCard, Banknote, Receipt, User, Check, ScanLine } from 'lucide-react';
+import BarcodeScanner from './BarcodeScanner';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 
@@ -17,6 +18,7 @@ export default function POS() {
   const [receiptModal, setReceiptModal] = useState(null);
   const [amountPaid, setAmountPaid] = useState('');
   const [processing, setProcessing] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
   const searchRef = useRef();
 
   useEffect(() => { subscribeProducts(setProducts); subscribeCustomers(setCustomers); }, []);
@@ -89,6 +91,17 @@ export default function POS() {
     }
   }
 
+  function handleBarcodeScan(code) {
+    const product = products.find(p => p.sku === code || p.name.toLowerCase() === code.toLowerCase());
+    if (product) {
+      addToCart(product);
+      toast.success(`Added: ${product.name}`);
+    } else {
+      toast.error(`No product found for: ${code}`);
+    }
+    setShowScanner(false);
+  }
+
   const filteredCustomers = customers.filter(c =>
     c.name.toLowerCase().includes(customerSearch.toLowerCase()) ||
     c.phone?.includes(customerSearch)
@@ -99,10 +112,20 @@ export default function POS() {
       {/* Left: Product Grid */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         <div style={{ marginBottom: '16px' }}>
-          <div style={{ position: 'relative', marginBottom: '12px' }}>
-            <Search size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-            <input ref={searchRef} className="input-field" placeholder="Search product name or scan barcode..." value={search} onChange={e => setSearch(e.target.value)}
-              style={{ paddingLeft: '42px', fontSize: '15px', padding: '13px 14px 13px 42px' }} />
+          <div style={{ position: 'relative', marginBottom: '12px', display: 'flex', gap: '8px' }}>
+            <div style={{ position: 'relative', flex: 1 }}>
+              <Search size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              <input ref={searchRef} className="input-field" placeholder="Search product name or scan barcode..." value={search} onChange={e => setSearch(e.target.value)}
+                style={{ paddingLeft: '42px', fontSize: '15px', padding: '13px 14px 13px 42px' }} />
+            </div>
+            <button
+              onClick={() => setShowScanner(true)}
+              title="Scan barcode"
+              style={{ padding: '0 16px', borderRadius: '10px', background: 'rgba(0,212,255,0.08)', border: '1px solid rgba(0,212,255,0.25)', cursor: 'pointer', color: 'var(--accent-cyan)', display: 'flex', alignItems: 'center', gap: '6px', fontFamily: 'Syne', fontWeight: 600, fontSize: '13px', flexShrink: 0 }}
+            >
+              <ScanLine size={18} />
+              <span className="scan-label">Scan</span>
+            </button>
           </div>
           <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px' }}>
             {categories.map(c => (
@@ -235,6 +258,10 @@ export default function POS() {
           Checkout · ₦{total.toLocaleString()}
         </button>
       </div>
+
+      {showScanner && (
+        <BarcodeScanner onScan={handleBarcodeScan} onClose={() => setShowScanner(false)} />
+      )}
 
       {/* Checkout Modal */}
       {checkoutModal && (

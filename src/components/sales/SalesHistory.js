@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { subscribeTransactions, getTransactionById } from '../../firebase/services';
+import { subscribeTransactions } from '../../firebase/services';
 import { format } from 'date-fns';
-import { BarChart2, DollarSign, ShoppingBag, TrendingUp, Calendar, Eye, X, Receipt, Printer } from 'lucide-react';
+import { BarChart2, DollarSign, ShoppingBag, TrendingUp, Calendar, Eye, X, Printer, Download } from 'lucide-react';
 
 export default function SalesHistory() {
   const [transactions, setTransactions] = useState([]);
@@ -16,102 +16,144 @@ export default function SalesHistory() {
   const avgSale = displayed.length > 0 ? totalSales / displayed.length : 0;
   const totalItems = displayed.reduce((s, t) => s + (t.items?.reduce((si, i) => si + i.quantity, 0) || 0), 0);
 
+  function exportCSV() {
+    if (displayed.length === 0) return;
+
+    const rows = [
+      ['Receipt #', 'Date', 'Time', 'Customer', 'Items', 'Payment Method', 'Subtotal', 'Total', 'Change'],
+      ...displayed.map(tx => [
+        '#' + tx.id.slice(-6).toUpperCase(),
+        tx.date || '',
+        tx.createdAt?.toDate ? format(tx.createdAt.toDate(), 'HH:mm:ss') : '',
+        tx.customerName || 'Walk-in',
+        tx.items?.length || 0,
+        tx.paymentMethod || 'Cash',
+        tx.subtotal || 0,
+        tx.total || 0,
+        tx.change || 0,
+      ])
+    ];
+
+    const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `swiftpos-sales-${viewAll ? 'all' : dateFilter}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
-        <div>
-          <h1 style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: '26px', margin: '0 0 4px' }}>Sales History</h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '14px', margin: 0 }}>
-            {viewAll ? `${transactions.length} total transactions` : `Showing results for ${format(new Date(dateFilter), 'MMM d, yyyy')}`}
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <div style={{ position: 'relative' }}>
-            <Calendar size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-            <input
-              type="date"
-              className="input-field"
-              value={dateFilter}
-              onChange={e => { setDateFilter(e.target.value); setViewAll(false); }}
-              style={{ paddingLeft: '32px', width: '160px' }}
-            />
-          </div>
-          <button onClick={() => setViewAll(!viewAll)} className={viewAll ? 'btn-primary' : 'btn-secondary'} style={{ whiteSpace: 'nowrap' }}>
-            {viewAll ? 'Date Filter' : 'View All'}
-          </button>
-        </div>
+      {/* Header */}
+      <div style={{ marginBottom: '20px' }}>
+        <h1 style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: '24px', margin: '0 0 4px' }}>Sales History</h1>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: 0 }}>
+          {viewAll ? `${transactions.length} total transactions` : `Results for ${format(new Date(dateFilter), 'MMM d, yyyy')}`}
+        </p>
       </div>
 
-      {/* Summary Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '14px', marginBottom: '24px' }}>
+      {/* Filters */}
+      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap' }}>
+        <div style={{ position: 'relative', flex: 1, minWidth: '140px' }}>
+          <Calendar size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+          <input
+            type="date"
+            className="input-field"
+            value={dateFilter}
+            onChange={e => { setDateFilter(e.target.value); setViewAll(false); }}
+            style={{ paddingLeft: '32px' }}
+          />
+        </div>
+        <button onClick={() => setViewAll(!viewAll)} className={viewAll ? 'btn-primary' : 'btn-secondary'} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
+          {viewAll ? 'Date Filter' : 'View All'}
+        </button>
+        <button
+          onClick={exportCSV}
+          disabled={displayed.length === 0}
+          style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 14px', borderRadius: '10px', background: 'rgba(0,229,160,0.08)', border: '1px solid rgba(0,229,160,0.2)', color: 'var(--accent-emerald)', fontFamily: 'Syne', fontSize: '13px', fontWeight: 600, cursor: displayed.length === 0 ? 'not-allowed' : 'pointer', opacity: displayed.length === 0 ? 0.5 : 1, flexShrink: 0, whiteSpace: 'nowrap' }}
+        >
+          <Download size={14} /> Export CSV
+        </button>
+      </div>
+
+      {/* Summary Cards — 2 column grid on all screens */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px', marginBottom: '20px' }}>
         {[
           { label: 'Revenue', value: `₦${totalSales.toLocaleString()}`, icon: DollarSign, color: '#00d4ff' },
           { label: 'Transactions', value: displayed.length, icon: ShoppingBag, color: '#00e5a0' },
           { label: 'Items Sold', value: totalItems, icon: BarChart2, color: '#ffb800' },
           { label: 'Avg Sale', value: `₦${Math.round(avgSale).toLocaleString()}`, icon: TrendingUp, color: '#c084fc' },
         ].map((s, i) => (
-          <div key={i} className="glass-card" style={{ padding: '18px', display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: `${s.color}1a`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <s.icon size={18} style={{ color: s.color }} />
+          <div key={i} className="glass-card" style={{ padding: '14px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: `${s.color}1a`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <s.icon size={17} style={{ color: s.color }} />
             </div>
-            <div>
-              <div style={{ fontFamily: 'Syne', fontSize: '20px', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1 }}>{s.value}</div>
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '3px', fontFamily: 'Syne', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{s.label}</div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontFamily: 'Syne', fontSize: '17px', fontWeight: 800, lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.value}</div>
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '3px', fontFamily: 'Syne', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{s.label}</div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Table */}
-      <div className="glass-card" style={{ overflow: 'hidden' }}>
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Receipt #</th>
-              <th>Date & Time</th>
-              <th>Customer</th>
-              <th>Items</th>
-              <th>Payment</th>
-              <th>Total</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {displayed.length === 0 ? (
-              <tr>
-                <td colSpan={7} style={{ textAlign: 'center', padding: '48px', color: 'var(--text-muted)' }}>
-                  <ShoppingBag size={32} style={{ marginBottom: '8px', opacity: 0.3, display: 'block', margin: '0 auto 8px' }} />
-                  <p style={{ fontFamily: 'Syne', fontSize: '14px', margin: 0 }}>No transactions found</p>
-                </td>
-              </tr>
-            ) : displayed.map(tx => (
-              <tr key={tx.id}>
-                <td style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: '13px', color: 'var(--accent-cyan)' }}>
-                  #{tx.id.slice(-6).toUpperCase()}
-                </td>
-                <td style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                  <div>{tx.date}</div>
-                  <div style={{ color: 'var(--text-muted)' }}>
-                    {tx.createdAt?.toDate ? format(tx.createdAt.toDate(), 'HH:mm:ss') : '—'}
-                  </div>
-                </td>
-                <td style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>{tx.customerName || 'Walk-in'}</td>
-                <td style={{ color: 'var(--text-secondary)' }}>{tx.items?.length || 0} items</td>
-                <td><span className={`badge ${tx.paymentMethod === 'Cash' ? 'badge-emerald' : tx.paymentMethod === 'Card' ? 'badge-cyan' : 'badge-muted'}`}>{tx.paymentMethod || 'Cash'}</span></td>
-                <td style={{ fontFamily: 'Syne', fontWeight: 800, color: 'var(--accent-emerald)' }}>₦{(tx.total || 0).toLocaleString()}</td>
-                <td>
-                  <button onClick={() => setDetailTx(tx)}
-                    style={{ background: 'rgba(0,212,255,0.06)', border: '1px solid rgba(0,212,255,0.15)', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', color: 'var(--accent-cyan)', fontFamily: 'Syne', fontSize: '12px', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                    <Eye size={12} /> View
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {/* Transaction Cards — replaces table for mobile friendliness */}
+      {displayed.length === 0 ? (
+        <div className="glass-card" style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>
+          <ShoppingBag size={32} style={{ display: 'block', margin: '0 auto 8px', opacity: 0.3 }} />
+          <p style={{ fontFamily: 'Syne', fontSize: '14px', margin: 0 }}>No transactions found</p>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {displayed.map(tx => (
+            <div key={tx.id} className="glass-card" style={{ padding: '16px', transition: 'border-color 0.2s' }}
+              onMouseEnter={e => e.currentTarget.style.borderColor = 'rgba(0,212,255,0.3)'}
+              onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}>
 
-      {/* Detail Modal */}
+              {/* Row 1: ID + Amount */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                <div>
+                  <span style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: '14px', color: 'var(--accent-cyan)' }}>
+                    #{tx.id.slice(-6).toUpperCase()}
+                  </span>
+                  <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: '3px 0 0' }}>
+                    {tx.date}{tx.createdAt?.toDate ? ' · ' + format(tx.createdAt.toDate(), 'HH:mm') : ''}
+                  </p>
+                </div>
+                <span style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: '20px', color: 'var(--accent-emerald)' }}>
+                  ₦{(tx.total || 0).toLocaleString()}
+                </span>
+              </div>
+
+              {/* Row 2: Badges */}
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '12px', alignItems: 'center' }}>
+                <span className="badge badge-muted">{tx.items?.length || 0} item{tx.items?.length !== 1 ? 's' : ''}</span>
+                <span className={`badge ${tx.paymentMethod === 'Cash' ? 'badge-emerald' : tx.paymentMethod === 'Card' ? 'badge-cyan' : 'badge-muted'}`}>
+                  {tx.paymentMethod || 'Cash'}
+                </span>
+                <span style={{ fontSize: '12px', color: tx.customerName ? 'var(--text-secondary)' : 'var(--text-muted)' }}>
+                  {tx.customerName ? `👤 ${tx.customerName}` : 'Walk-in'}
+                </span>
+              </div>
+
+              {/* Row 3: View Receipt button */}
+              <button
+                onClick={() => setDetailTx(tx)}
+                style={{
+                  width: '100%', padding: '10px', borderRadius: '10px',
+                  background: 'rgba(0,212,255,0.06)', border: '1px solid rgba(0,212,255,0.15)',
+                  color: 'var(--accent-cyan)', fontFamily: 'Syne', fontSize: '13px', fontWeight: 600,
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
+                }}>
+                <Eye size={14} /> View Receipt
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Receipt Detail Modal */}
       {detailTx && (
         <div className="modal-overlay">
           <div className="modal-box" style={{ maxWidth: '420px' }}>
@@ -124,7 +166,7 @@ export default function SalesHistory() {
                   {detailTx.createdAt?.toDate ? format(detailTx.createdAt.toDate(), 'MMM d, yyyy · HH:mm') : detailTx.date}
                 </p>
               </div>
-              <button onClick={() => setDetailTx(null)} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', borderRadius: '8px', padding: '6px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+              <button onClick={() => setDetailTx(null)} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid var(--border)', borderRadius: '8px', padding: '8px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
                 <X size={16} />
               </button>
             </div>
@@ -143,7 +185,7 @@ export default function SalesHistory() {
                     <p style={{ fontFamily: 'Syne', fontSize: '14px', fontWeight: 600, margin: '0 0 2px' }}>{item.name}</p>
                     <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>₦{item.price?.toLocaleString()} × {item.quantity}</p>
                   </div>
-                  <span style={{ fontFamily: 'Syne', fontWeight: 700, color: 'var(--text-primary)' }}>₦{item.subtotal?.toLocaleString()}</span>
+                  <span style={{ fontFamily: 'Syne', fontWeight: 700 }}>₦{item.subtotal?.toLocaleString()}</span>
                 </div>
               ))}
             </div>
